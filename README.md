@@ -113,11 +113,10 @@ address： 要查询余额的地址
 **6. 事务查询**  
 path: /txs/:transactionHash  
 method:get  
-
+```
 respsone:  {  
   readonly height: string;  
-  readonly txhash: string;  
-  /** 🤷‍♂️ */  
+  readonly txhash: string;   
   readonly codespace?: string;  
   /** Falsy when transaction execution succeeded. Contains error code on error. */  
   readonly code?: number;  
@@ -130,7 +129,7 @@ respsone:  {
   readonly gas_used?: string;  
   readonly timestamp: string;  
 }  
-
+```
 成功：返回数据结构里，如果code存在并 code >0 ,代表事务执行失败。    
 失败：code==0 代表事务成功，一般成功返回结构体里不含code字段。  
 

@@ -1,8 +1,10 @@
 import * as fs from 'fs';
-import { CosmWasmClient, MsgExecuteContract, SigningCosmWasmClient } from '@cosmjs/cosmwasm';
-import { BroadcastMode, coins, isBroadcastTxFailure, isBroadcastTxSuccess, LcdClient, makeSignDoc, makeStdTx, OfflineSigner, StdFee } from '@cosmjs/launchpad';
+import { CosmWasmClient, MsgExecuteContract, setupWasmExtension, SigningCosmWasmClient } from '@cosmjs/cosmwasm';
+import { BroadcastMode, coins, isBroadcastTxFailure, isBroadcastTxSuccess, LcdClient, makeSignDoc, makeStdTx, OfflineSigner, setupAuthExtension, StdFee, StdTx, WrappedStdTx } from '@cosmjs/launchpad';
 import { chainId, httpUrl } from '../config';
 import { MsgTransfer } from '../types';
+import { fromBase64, toHex } from '@cosmjs/encoding';
+import { Sha256 } from "@cosmjs/crypto";
 
 
 export async function signAndBroadcast(msgs: any, memo: string, client: SigningCosmWasmClient) {
@@ -92,4 +94,21 @@ export async function get_transaction(transction: string) {
    const txsResponse = await client.txById(transction);
 
   return txsResponse;
+}
+
+
+export async function get_hash(signedTx:StdTx) {
+
+  const client = LcdClient.withExtensions(
+    { apiUrl:httpUrl },
+    setupAuthExtension,
+    // 👇 this extension can come from a chain-specific package or the application itself
+    setupWasmExtension,
+);
+  const wrapTx: WrappedStdTx = { type: "cosmos-sdk/StdTx", value: signedTx }
+  const res = await client.encodeTx(wrapTx)
+  const sha = new Sha256(fromBase64(res.tx))
+  // tslint:disable-next-line: no-console
+ return toHex(sha.digest()).toLocaleUpperCase()
+  
 }

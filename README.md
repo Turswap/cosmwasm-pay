@@ -28,7 +28,7 @@ response:
 **2. 代币发送**  
 path: /wasm-transfer/:key_name/:index
 method: post
-request body: {msg:[{}Wasmtransfer],memo,fromAddress:string,index:number}     
+request body: {msg:[{}Wasmtransfer],memo,fromAddress:string}     
 
     curl -X POST "http://localhost:3000/wasm-transfer/default/0" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"msg\":  [ {\"toAddress\":\"midas1ln3cxx4h4zn0q8e0wrm8xvr0k4u3jqsyueks8d\",\"tokenAddress\":\"midas18vd8fpwxzck93qlwghaj6arh4p7c5n895h5ptt\",\"amount\":\"20\"},{\"toAddress\":\"midas1d776tau32m3h3edcusudjk27d86h3p0s60hwz3\",\"tokenAddress\":\"midas18vd8fpwxzck93qlwghaj6arh4p7c5n895h5ptt\",\"amount\":\"33333\"} ], \"fromAddress\":\"midas1jp2flp47zz54pddjyxvpz9kj6jnthu5mw27j9w\", \"memo\":\"\"}"
 
@@ -100,7 +100,7 @@ transfer：  //转账记录
 }
 
 
-    curl -X GET "http://localhost:3000/wasm-transfer-event?contract_address=midas1zwr262fppwh9kg35v8sfffec00xt6hxg3esztz" -H  "accept: application/json" -H  "Content-Type: application/json"  
+    curl -X GET "http://localhost:3000/wasm-transfer-event?contract_address=midas1598hqw4duulvcff5fp7x9fzys68876jgfhhzpn&to_address=midas1v68vam7xs7lckk9tla6prh00ryvufnc35kf3te" -H  "accept: application/json" -H  "Content-Type: application/json"  
 
 
 **5. 余额查询**  
@@ -138,7 +138,7 @@ respsone:  {
 见节点文件夹的readme.md
 
 这个服务连接的是节点的 rest-server 的 api 。更多api 请你参考 cosmos restful api：
-https://cosmos.network/rpc/
+http://rpc.midas.pub/swagger/
 
 
 **2. 接口使用方法：**  
@@ -148,6 +148,6 @@ https://cosmos.network/rpc/
 
 4. 在 keys 目录下添加多个助记词文件，每个文件对一个助记词钱包，供不同功能使用。
 
-cac代币合约地址：midas1zwr262fppwh9kg35v8sfffec00xt6hxg3esztz 
+
 
 

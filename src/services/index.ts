@@ -4,21 +4,21 @@ import { BroadcastMode, coins, isBroadcastTxFailure, isBroadcastTxSuccess, LcdCl
 import { chainId, httpUrl } from '../config';
 import { MsgTransfer } from '../types';
 import { fromBase64, toHex } from '@cosmjs/encoding';
-import { Sha256 } from "@cosmjs/crypto";
+import { Sha256 } from '@cosmjs/crypto';
 
 
 export async function signAndBroadcast(msgs: any, memo: string, client: SigningCosmWasmClient) {
 
-    const fee: StdFee = {
-        amount: coins(5000000, 'umdse'),
-        gas: '90000000',
-      };
-    const result = await client.signAndBroadcast(msgs, fee, memo);
-    return result;
+  const fee: StdFee = {
+    amount: coins(5000000, 'umdse'),
+    gas: '90000000',
+  };
+  const result = await client.signAndBroadcast(msgs, fee, memo);
+  return result;
 
 }
 
-export async function sign(signer: OfflineSigner, msgs: any, memo: string, account_number: string|number, sequence: string|number) {
+export async function sign(signer: OfflineSigner, msgs: any, memo: string, account_number: string | number, sequence: string | number) {
   const [{ address: myAddress }] = await signer.getAccounts();
   const fee: StdFee = {
     amount: coins(5000000, 'umdse'),
@@ -32,46 +32,46 @@ export async function sign(signer: OfflineSigner, msgs: any, memo: string, accou
 }
 
 export async function wasmTransfer(wasmMsgs: MsgTransfer[], memo: string, client: SigningCosmWasmClient, sendAddress: string) {
-   const msgs = [];
+  const msgs = [];
 
-    for (let i = 0; i < wasmMsgs.length; i++) {
-      const wasmMsg = wasmMsgs[i];
-      const msg: MsgExecuteContract = {
-          type: 'wasm/MsgExecuteContract',
-          value: {
-              sender: sendAddress,
-              contract: wasmMsg.tokenAddress,
-              msg: {transfer: { recipient: wasmMsg.toAddress, amount: wasmMsg.amount} },
-              sent_funds: [],
-          }
-      };
-      msgs.push(msg);
-
-    }
-
-
-    const fee: StdFee = {
-      amount: coins(0, 'umdse'),
-      gas: '200000',
+  for (let i = 0; i < wasmMsgs.length; i++) {
+    const wasmMsg = wasmMsgs[i];
+    const msg: MsgExecuteContract = {
+      type: 'wasm/MsgExecuteContract',
+      value: {
+        sender: sendAddress,
+        contract: wasmMsg.tokenAddress,
+        msg: { transfer: { recipient: wasmMsg.toAddress, amount: wasmMsg.amount } },
+        sent_funds: [],
+      }
     };
-    try {
-      const result = await client.signAndBroadcast(msgs, fee, memo);
-     if (isBroadcastTxSuccess(result)) {
-      return {'result': {transactionHash: result.transactionHash}};
-     }
-     if (isBroadcastTxFailure(result)) {
-       return {'error': result};
-     }
+    msgs.push(msg);
 
-    } catch (e) {
-      return {'error': e.message};
+  }
+
+
+  const fee: StdFee = {
+    amount: coins(0, 'umdse'),
+    gas: '200000',
+  };
+  try {
+    const result = await client.signAndBroadcast(msgs, fee, memo);
+    if (isBroadcastTxSuccess(result)) {
+      return { 'result': { transactionHash: result.transactionHash } };
     }
+    if (isBroadcastTxFailure(result)) {
+      return { 'error': result };
+    }
+
+  } catch (e) {
+    return { 'error': e.message };
+  }
 
 
 }
 
 
-export  async function get_mnemonic(key_name: string): Promise<string> {
+export async function get_mnemonic(key_name: string): Promise<string> {
   const keystore = fs.readFileSync(`./src/keys/${key_name}.json`, { encoding: 'utf-8' });
   const key = JSON.parse(keystore);
   const mnemonic = key.mnemonic;
@@ -79,7 +79,7 @@ export  async function get_mnemonic(key_name: string): Promise<string> {
 }
 
 
-export async function get_cw_balance(contractAddress: string, address: string ) {
+export async function get_cw_balance(contractAddress: string, address: string) {
   const client = new CosmWasmClient(httpUrl, BroadcastMode.Block);
   const queryMsg = { balance: { address: address } };
 
@@ -91,24 +91,24 @@ export async function get_cw_balance(contractAddress: string, address: string ) 
 
 export async function get_transaction(transction: string) {
   const client = new LcdClient(httpUrl, BroadcastMode.Block);
-   const txsResponse = await client.txById(transction);
+  const txsResponse = await client.txById(transction);
 
   return txsResponse;
 }
 
 
-export async function get_hash(signedTx:StdTx) {
+export async function get_hash(signedTx: StdTx) {
 
   const client = LcdClient.withExtensions(
-    { apiUrl:httpUrl },
+    { apiUrl: httpUrl },
     setupAuthExtension,
     // 👇 this extension can come from a chain-specific package or the application itself
     setupWasmExtension,
-);
-  const wrapTx: WrappedStdTx = { type: "cosmos-sdk/StdTx", value: signedTx }
-  const res = await client.encodeTx(wrapTx)
-  const sha = new Sha256(fromBase64(res.tx))
+  );
+  const wrapTx: WrappedStdTx = { type: 'cosmos-sdk/StdTx', value: signedTx };
+  const res = await client.encodeTx(wrapTx);
+  const sha = new Sha256(fromBase64(res.tx));
   // tslint:disable-next-line: no-console
- return toHex(sha.digest()).toLocaleUpperCase()
-  
+  return toHex(sha.digest()).toLocaleUpperCase();
+
 }

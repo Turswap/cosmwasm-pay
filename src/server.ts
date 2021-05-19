@@ -47,19 +47,29 @@ app.post('/sign/:key_name', async function (req: any, res: any) {
 app.post('/sign', async function (req: any, res: any) {
   const msgs = req.body['msg'];
   const memo = req.body['memo'];
+  if (memo === undefined) {
+    res.send(JSON.stringify({ error: { msg: 'memo必须输入' } }));
+  }
+
+  if (msgs === undefined) {
+    res.send(JSON.stringify({ error: { msg: 'msgs必须输入' } }));
+  }
+
   const account_number = req.body['account_number'];
   const sequence = req.body['sequence'];
   const mnemonic = req.body['mnemonic'];
   const signer = await buildWallet(mnemonic, 0);
   const result = await sign(signer, msgs, memo, account_number, sequence);
-  res.send(JSON.stringify({ result: result }));
+
+  const hash = await get_hash(result);
+  res.send(JSON.stringify({ result: result, hash: hash }));
 });
 
-app.post("/get_hash",async function name(req: any, res: any) {
+app.post('/get_hash', async function name(req: any, res: any) {
   const tx = req.body['tx'];
-  var hash=await get_hash(tx)
-  res.send(JSON.stringify({ result: hash })); 
-})
+  const hash = await get_hash(tx);
+  res.send(JSON.stringify({ result: hash }));
+});
 
 
 app.post('/wasm-transfer/:key_name/:index', async function (req: any, res: any) {

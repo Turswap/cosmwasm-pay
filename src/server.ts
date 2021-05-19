@@ -3,7 +3,7 @@ import { LcdClient, Secp256k1HdWallet } from '@cosmjs/launchpad';
 
 import express = require('express');
 import { bech32prefix, httpUrl } from './config';
-import { get_cw_balance, get_hash, get_mnemonic, get_transaction, sign, wasmTransfer } from './services';
+import { get_account, get_cw_balance, get_hash, get_mnemonic, get_transaction, sign, wasmTransfer } from './services';
 
 import { buildWallet, getSigningCosmWasmClient } from './utils';
 const app: express.Application = express();
@@ -29,6 +29,15 @@ app.post('/new-address', async function (req: any, res: any) {
   }
 
 });
+
+
+app.get('/account/:address', (req: any, res: any) =>  async function (req: any, res: any) {
+  const address = req.params.address;
+  const result = await get_account(address);
+  return res.send(JSON.stringify({ result: result }));
+});
+
+
 app.post('/sign/:key_name', async function (req: any, res: any) {
   const msgs = req.body['msg'];
   const memo = req.body['memo'];

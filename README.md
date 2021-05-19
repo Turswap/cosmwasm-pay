@@ -24,6 +24,10 @@ response:
 
 
 
+**获取 account_number , sequence**
+path: /account/:address
+method: get
+
 
 **2. 代币发送**  
 path: /wasm-transfer/:key_name/:index

@@ -112,3 +112,19 @@ export async function get_hash(signedTx: StdTx) {
   return toHex(sha.digest()).toLocaleUpperCase();
 
 }
+
+export async function get_account(senderAddress: string) {
+
+  const client = LcdClient.withExtensions(
+    { apiUrl: httpUrl },
+    setupAuthExtension,
+    // 👇 this extension can come from a chain-specific package or the application itself
+    setupWasmExtension,
+  );
+  const { account_number, sequence } = (
+    await client.auth.account(senderAddress)
+  ).result.value;
+
+  return { account_number, sequence };
+
+}

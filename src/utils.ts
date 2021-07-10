@@ -2,6 +2,7 @@ import {
     GasPrice,
     Secp256k1HdWallet,
     makeCosmoshubPath,
+    BroadcastMode,
 } from '@cosmjs/launchpad';
 import {
     SigningCosmWasmClient
@@ -23,6 +24,16 @@ export const getSigningCosmWasmClient = async (mnemonic: string, index: number):
 
 };
 
+
+export const getAsyncSigningCosmWasmClient = async (mnemonic: string, index: number): Promise<{client: SigningCosmWasmClient, address: string}> => {
+    const gasPrice = GasPrice.fromString('1umdse');
+    const wallet = await buildWallet(mnemonic, index);
+    const [{ address }] = await wallet.getAccounts();
+    const senderAddress = address;
+    const client = new SigningCosmWasmClient(httpUrl, senderAddress, wallet, gasPrice, {}, BroadcastMode.Async);
+    return {client: client, address: address};
+
+};
 
 export const contractTransferLogParser = (log: any) => {
 

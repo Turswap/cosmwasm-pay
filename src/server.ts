@@ -5,7 +5,7 @@ import express = require('express');
 import { bech32prefix, httpUrl } from './config';
 import { get_account, get_cw_balance, get_hash, get_mnemonic, get_transaction, sign, wasmTransfer } from './services';
 
-import { buildWallet, getSigningCosmWasmClient } from './utils';
+import { buildWallet, getAsyncSigningCosmWasmClient, getSigningCosmWasmClient } from './utils';
 const app: express.Application = express();
 const port = 3000;
 const hostname = '127.0.0.1';
@@ -91,7 +91,7 @@ app.post('/wasm-transfer/:key_name/:index', async function (req: any, res: any) 
 
   const mnemonic = await get_mnemonic(key_name);
 
-  const { client, address: sender } = await getSigningCosmWasmClient(mnemonic, Number(index));
+  const { client, address: sender } = await getAsyncSigningCosmWasmClient(mnemonic, Number(index));
   if (fromAddress !== sender) {
     res.send(JSON.stringify({ error: { msg: `发送地址不正确，助记词的index(${index})的地址是${sender}，提交的fromAddress是${fromAddress}` } }));
   }

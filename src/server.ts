@@ -117,6 +117,16 @@ app.get('/txs/:transactionHash', async function (req: any, res: any) {
 });
 
 
+app.get('/blocks/:height', async function(req: any, res: any) {
+  const client = new LcdClient(httpUrl);
+  const height = req.params.height;
+  const blockResponse = client.blocks(height);
+  const txs = (await blockResponse).block.data.txs;
+  res.send(JSON.stringify(txs));
+
+});
+
+
 app.get('/wasm-transfer-event', async function (req: any, res: any) {
   const contractAddress = req.query.contract_address;
   const fromAddress = req.query.from_address;

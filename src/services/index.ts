@@ -57,7 +57,7 @@ export async function wasmTransfer(wasmMsgs: MsgTransfer[], memo: string, client
   try {
     const result = await client.signAndBroadcast(msgs, fee, memo);
     if (isBroadcastTxSuccess(result)) {
-      return { 'result': { transactionHash: result.transactionHash } };
+      return { 'result': result};
     }
     if (isBroadcastTxFailure(result)) {
       return { 'error': result };

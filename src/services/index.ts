@@ -1,6 +1,6 @@
 import * as fs from 'fs';
-import { CosmWasmClient, MsgExecuteContract, setupWasmExtension, SigningCosmWasmClient } from '@cosmjs/cosmwasm';
-import { BroadcastMode, coins, isBroadcastTxFailure, isBroadcastTxSuccess, LcdClient, makeSignDoc, makeStdTx, OfflineSigner, setupAuthExtension, StdFee, StdTx, WrappedStdTx } from '@cosmjs/launchpad';
+import { CosmWasmClient, MsgExecuteContract, setupWasmExtension, SigningCosmWasmClient, } from '@cosmjs/cosmwasm';
+import { BroadcastMode, coins, isBroadcastTxFailure, isBroadcastTxSuccess, LcdClient, makeSignDoc, makeStdTx, OfflineSigner, Secp256k1HdWallet, setupAuthExtension, StdFee, StdTx, WrappedStdTx } from '@cosmjs/launchpad';
 import { chainId, httpUrl } from '../config';
 import { MsgTransfer } from '../types';
 import { fromBase64, toHex } from '@cosmjs/encoding';
@@ -21,8 +21,8 @@ export async function signAndBroadcast(msgs: any, memo: string, client: SigningC
 export async function sign(signer: OfflineSigner, msgs: any, memo: string, account_number: string | number, sequence: string | number) {
   const [{ address: myAddress }] = await signer.getAccounts();
   const fee: StdFee = {
-    amount: coins(5000000, 'umdse'),
-    gas: '89000000',
+    amount: coins(0, 'umdse'),
+    gas: '200000',
   };
   const signDoc = makeSignDoc(msgs, fee, chainId, memo, account_number, sequence);
 
@@ -49,11 +49,12 @@ export async function wasmTransfer(wasmMsgs: MsgTransfer[], memo: string, client
 
   }
 
-
   const fee: StdFee = {
     amount: coins(0, 'umdse'),
     gas: '200000',
   };
+
+
   try {
     const result = await client.signAndBroadcast(msgs, fee, memo);
     if (isBroadcastTxSuccess(result)) {
@@ -67,6 +68,45 @@ export async function wasmTransfer(wasmMsgs: MsgTransfer[], memo: string, client
     return { 'error': e.message };
   }
 
+}
+
+export async function wasmTransferV2(wasmMsgs: MsgTransfer[], memo: string, signer: Secp256k1HdWallet, sendAddress: string, accountNumber: string|number, sequence: string|number) {
+  const msgs = [];
+
+  for (let i = 0; i < wasmMsgs.length; i++) {
+    const wasmMsg = wasmMsgs[i];
+    const msg: MsgExecuteContract = {
+      type: 'wasm/MsgExecuteContract',
+      value: {
+        sender: sendAddress,
+        contract: wasmMsg.tokenAddress,
+        msg: { transfer: { recipient: wasmMsg.toAddress, amount: wasmMsg.amount } },
+        sent_funds: [],
+      }
+    };
+    msgs.push(msg);
+
+  }
+
+  const fee: StdFee = {
+    amount: coins(0, 'umdse'),
+    gas: '200000',
+  };
+
+  const tx = await sign(signer, msgs, memo, accountNumber, sequence);
+  const client = new CosmWasmClient(httpUrl, BroadcastMode.Async);
+  try {
+    const result = await client.broadcastTx(tx);
+    if (isBroadcastTxSuccess(result)) {
+      return { 'result': result};
+    }
+    if (isBroadcastTxFailure(result)) {
+      return { 'error': result };
+    }
+
+  } catch (e) {
+    return { 'error': e.message };
+  }
 
 }
 

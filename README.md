@@ -25,8 +25,15 @@ response:
 
 
 **获取 account_number , sequence**
-path: /account/:address
+path: /account/:key_name/:index
 method: get
+curl -X GET  -H  "accept: application/json" -H  "Content-Type: application/json"  "http://localhost:3000/account/default/0"
+response: {"account_number":"22148","sequence":"28"}
+
+**请求交易签名**
+path: /sign/:key_name/:index
+method: post
+request body: {msg:[{}Wasmtransfer],memo,fromAddress:string}     
 
 
 **2. 代币发送**  
@@ -53,6 +60,30 @@ error: {"height":number,"transactionHash":string,"code":number!=0 }
 
 msg说明：转一笔就是msg里只有一个Wasmtransfer，多笔就是msg里有个个Wasmtransfer。 一个事务里含有多笔交易，hash一个，使用idnex区别开来。
 
+**代币发送V2**  
+path: /wasm-transfer/:key_name/:index
+method: post
+request body: {msg:[{}Wasmtransfer],memo,fromAddress:string,sequence:string,accountNumber:string}     
+
+    curl -X POST "http://localhost:3000/wasm-transfer-v2/default/0" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"msg\":  [ {\"toAddress\":\"midas1ln3cxx4h4zn0q8e0wrm8xvr0k4u3jqsyueks8d\",\"tokenAddress\":\"midas18vd8fpwxzck93qlwghaj6arh4p7c5n895h5ptt\",\"amount\":\"1\"},{\"toAddress\":\"midas1d776tau32m3h3edcusudjk27d86h3p0s60hwz3\",\"tokenAddress\":\"midas18vd8fpwxzck93qlwghaj6arh4p7c5n895h5ptt\",\"amount\":\"2\"} ], \"fromAddress\":\"midas1jp2flp47zz54pddjyxvpz9kj6jnthu5mw27j9w\", \"memo\":\"\",\"sequence\":\"22148\",\"accountNumber\":\"28\"}"
+
+response:
+{"result":{}}|{"error:{}}
+
+
+**数据结构：**
+Wasmtransfer: {toAddress:string,tokenAddress:string,amount:string}, // amount= (humanAmount*10**decimals).toString() 
+
+
+toAddress:收款地址 
+tokenAddress: 代币的合约地址 
+amount :  发送代币的数量，(humanAmount*10**decimals).toString()
+
+result:{ } 
+error: {"height":number,"transactionHash":string,"code":number!=0 }
+
+msg说明：转一笔就是msg里只有一个Wasmtransfer，多笔就是msg里有个个Wasmtransfer。 一个事务里含有多笔交易，hash一个，使用idnex区别开来。
+
 
 
 **3. 签名**  
@@ -60,7 +91,7 @@ path: /sign/:key_name
 
 request: {"msg":[object], "memo":string,"account_number":string, "sequence":string}   //in body
 
-    curl -X POST "http://localhost:3000/sign" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"msg\": [{\"type\":\"wasm/MsgExecuteContract\",\"value\":{\"sender\":\"midas1jp2flp47zz54pddjyxvpz9kj6jnthu5mw27j9w\",   \"contract\":\"midas1wgh6adn8geywx0v78zs9azrqtqdegufuhe9kf7\",\"msg\":{\"transfer\":{\"recipient\":\"midas1ln3cxx4h4zn0q8e0wrm8xvr0k4u3jqsyueks8d\",\"amount\":\"20\"}},\"sent_funds\":[]}},{\"type\":\"wasm/MsgExecuteContract\",\"value\":{\"sender\":\"midas1jp2flp47zz54pddjyxvpz9kj6jnthu5mw27j9w\",\"contract\":\"midas1wgh6adn8geywx0v78zs9azrqtqdegufuhe9kf7\",\"msg\":{\"transfer\":{\"recipient\":\"midas1d776tau32m3h3edcusudjk27d86h3p0s60hwz3\",\"amount\":\"33333\"}},\"sent_funds\":[]}}] ,  \"key_name\":\"default\",\"account_number\":\"9\",\"sequence\":\"12058\" }"
+    curl -X POST "http://localhost:3000/sign" -H  "accept: application/json" -H  "Content-Type: application/json" -d "{  \"msg\": [{\"type\":\"wasm/MsgExecuteContract\",\"value\":{\"sender\":\"midas1jp2flp47zz54pddjyxvpz9kj6jnthu5mw27j9w\",   \"contract\":\"midas1wgh6adn8geywx0v78zs9azrqtqdegufuhe9kf7\",\"msg\":{\"transfer\":{\"recipient\":\"midas1ln3cxx4h4zn0q8e0wrm8xvr0k4u3jqsyueks8d\",\"amount\":\"1\"}},\"sent_funds\":[]}},{\"type\":\"wasm/MsgExecuteContract\",\"value\":{\"sender\":\"midas1jp2flp47zz54pddjyxvpz9kj6jnthu5mw27j9w\",\"contract\":\"midas1wgh6adn8geywx0v78zs9azrqtqdegufuhe9kf7\",\"msg\":{\"transfer\":{\"recipient\":\"midas1d776tau32m3h3edcusudjk27d86h3p0s60hwz3\",\"amount\":\"1\"}},\"sent_funds\":[]}}] ,  \"key_name\":\"default\",\"account_number\":\"22148\",\"sequence\":\"28\" }"
 
 
 
@@ -154,4 +185,10 @@ http://rpc.midas.pub/swagger/
 
 
 
+# 代币转账最佳实践
+  通过异步方式发送事务.如果需连续发送事务,业务端维护账户的sequence.每发送一笔事物,sequence=sequence+1
 
+  1. 通过 /account/:key_name/:index 接口获取当前帐号的sequence, 得到 {"account_number":"22148","sequence":"28"} 
+     sequence 相当于这个账户的第N笔交易,当连续发送多笔交易时,可自己+1 发送.
+  2. 通过
+     

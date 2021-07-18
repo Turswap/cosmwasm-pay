@@ -3,7 +3,7 @@ import { LcdClient, Secp256k1HdWallet } from '@cosmjs/launchpad';
 
 import express = require('express');
 import { bech32prefix, httpUrl } from './config';
-import { get_account, get_cw_balance, get_hash, get_mnemonic, get_transaction, sign, wasmTransfer } from './services';
+import { get_account, get_cw_balance, get_hash, get_mnemonic, get_transaction, sign, wasmTransfer, wasmTransferV2 } from './services';
 
 import { buildWallet, getAsyncSigningCosmWasmClient, getSigningCosmWasmClient } from './utils';
 const app: express.Application = express();
@@ -31,14 +31,29 @@ app.post('/new-address', async function (req: any, res: any) {
 });
 
 
-app.get('/account/:address', (req: any, res: any) =>  async function (req: any, res: any) {
+app.get('/account/:address',  async function (req: any, res: any) {
   const address = req.params.address;
   const result = await get_account(address);
   return res.send(JSON.stringify({ result: result }));
 });
 
 
-app.post('/sign/:key_name', async function (req: any, res: any) {
+app.get('/account/:key_name/:index',  async function (req: any, res: any) {
+  const key_name = req.params.key_name;
+
+  const index: number = Number(req.params.index);
+
+  const mnemonic = await get_mnemonic(key_name);
+  const signer = await buildWallet(mnemonic, index);
+
+  const [{ address }] = await signer.getAccounts();
+  const result = await get_account(address);
+
+  return res.send(JSON.stringify({ result: result }));
+});
+
+
+app.post('/sign/:key_name/:index', async function (req: any, res: any) {
   const msgs = req.body['msg'];
   const memo = req.body['memo'];
   const account_number = req.body['account_number'];
@@ -47,32 +62,19 @@ app.post('/sign/:key_name', async function (req: any, res: any) {
   const key_name = req.params.key_name;
   const mnemonic = await get_mnemonic(key_name);
 
-  const signer = await buildWallet(mnemonic, 0);
+  const index: number = Number(req.params.index);
+  const signer = await buildWallet(mnemonic, index);
   const result = await sign(signer, msgs, memo, account_number, sequence);
-
-  res.send(JSON.stringify({ result: result }));
-});
-
-app.post('/sign', async function (req: any, res: any) {
-  const msgs = req.body['msg'];
-  const memo = req.body['memo'];
-  if (memo === undefined) {
-    res.send(JSON.stringify({ error: { msg: 'memo必须输入' } }));
-  }
-
-  if (msgs === undefined) {
-    res.send(JSON.stringify({ error: { msg: 'msgs必须输入' } }));
-  }
-
-  const account_number = req.body['account_number'];
-  const sequence = req.body['sequence'];
-  const mnemonic = req.body['mnemonic'];
-  const signer = await buildWallet(mnemonic, 0);
-  const result = await sign(signer, msgs, memo, account_number, sequence);
-
   const hash = await get_hash(result);
   res.send(JSON.stringify({ result: result, hash: hash }));
 });
+
+app.post('/tx', async function (req: any, res: any) {
+
+  const result = req.body;
+  res.send(JSON.stringify(result));
+});
+
 
 app.post('/get_hash', async function name(req: any, res: any) {
   const tx = req.body['tx'];
@@ -99,6 +101,29 @@ app.post('/wasm-transfer/:key_name/:index', async function (req: any, res: any) 
   res.send(JSON.stringify(result));
 });
 
+app.post('/wasm-transfer-v2/:key_name/:index', async function (req: any, res: any) {
+
+  const msgs = req.body['msg'];
+  const memo = req.body['memo'];
+  const fromAddress = req.body['fromAddress'];
+  const sequence = req.body['sequence'];
+  const accountNumber = req.body['accountNumber'];
+  const key_name = req.params.key_name;
+  const index = Number(req.params.index);
+
+  const mnemonic = await get_mnemonic(key_name);
+  const signer = await buildWallet(mnemonic, index);
+  const [{address}] = await signer.getAccounts();
+
+  if (fromAddress !== address) {
+    res.send(JSON.stringify({ error: { msg: `发送地址不正确，助记词的index(${index})的地址是${address}，提交的fromAddress是${fromAddress}` } }));
+  }
+
+  const result = await wasmTransferV2(msgs, memo, signer, address, accountNumber, sequence);
+  res.send(JSON.stringify(result));
+});
+
+
 app.get('/wasm-balance/:contract/:address', async function (req: any, res: any) {
 
   const address = req.params.address;
@@ -114,16 +139,6 @@ app.get('/txs/:transactionHash', async function (req: any, res: any) {
   const result = await get_transaction(transaction);
 
   res.send(JSON.stringify(result));
-});
-
-
-app.get('/blocks/:height', async function(req: any, res: any) {
-  const client = new LcdClient(httpUrl);
-  const height = req.params.height;
-  const blockResponse = client.blocks(height);
-  const txs = (await blockResponse).block.data.txs;
-  res.send(JSON.stringify(txs));
-
 });
 
 

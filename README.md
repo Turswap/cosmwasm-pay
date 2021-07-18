@@ -61,7 +61,7 @@ error: {"height":number,"transactionHash":string,"code":number!=0 }
 msg说明：转一笔就是msg里只有一个Wasmtransfer，多笔就是msg里有个个Wasmtransfer。 一个事务里含有多笔交易，hash一个，使用idnex区别开来。
 
 **代币发送V2**  
-path: /wasm-transfer/:key_name/:index
+path: /wasm-transfer-v2/:key_name/:index
 method: post
 request body: {msg:[{}Wasmtransfer],memo,fromAddress:string,sequence:string,accountNumber:string}     
 
@@ -190,5 +190,5 @@ http://rpc.midas.pub/swagger/
 
   1. 通过 /account/:key_name/:index 接口获取当前帐号的sequence, 得到 {"account_number":"22148","sequence":"28"} 
      sequence 相当于这个账户的第N笔交易,当连续发送多笔交易时,可自己+1 发送.
-  2. 通过
+  2. 通过  /wasm-transfer-v2/:key_name/:index 广播交易数据.
      
